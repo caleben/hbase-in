@@ -1,0 +1,23 @@
+{
+  "tableName": "course_info",
+  "schemaName": "x",
+  "partitionInfo": {
+    "partitionType": 1,
+    "partitionNum": 1,
+    "rowKeyField": "course"
+  },
+  "columns": [
+    {
+      "name": "course",
+      "type": "String",
+      "ordinalPosition": 0,
+      "family": "f"
+    },
+    {
+      "name": "teacher",
+      "type": "String",
+      "ordinalPosition": 1,
+      "family": "f"
+    }
+  ]
+}

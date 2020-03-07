@@ -1,0 +1,41 @@
+{
+  "tableName": "student_info",
+  "schemaName": "x",
+  "partitionInfo": {
+    "partitionType": 1,
+    "partitionNum": 2,
+    "rowKeyField": "gender"
+  },
+  "columns": [
+    {
+      "name": "name",
+      "type": "String",
+      "ordinalPosition": 0,
+      "family": "f"
+    },
+    {
+      "name": "classNo",
+      "type": "Integer",
+      "ordinalPosition": 1,
+      "family": "f"
+    },
+    {
+      "name": "age",
+      "type": "Integer",
+      "ordinalPosition": 2,
+      "family": "f"
+    },
+    {
+      "name": "gender",
+      "type": "String",
+      "ordinalPosition": 3,
+      "family": "f"
+    },
+    {
+      "name": "course",
+      "type": "String",
+      "ordinalPosition": 4,
+      "family": "f"
+    }
+  ]
+}
