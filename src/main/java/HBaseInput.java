@@ -7,6 +7,9 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,10 +47,13 @@ public class HBaseInput {
         }
     }
 
-    private void input() throws IOException {
-        Admin admin = connection.getAdmin();
-        HColumnDescriptor columnDescriptor = new HColumnDescriptor(Constant.FAMILY);
-        HTableDescriptor tableDescriptor = new HTableDescriptor(TableName.valueOf(Constant.NAMESPACE, Constant.TABLE));
+    //todo
+    private void input(TableName tableName) throws IOException {
+        Table table = connection.getTable(tableName);
+        String rowKey = "";
+        Put put = new Put(Bytes.toBytes(rowKey));
+        table.put(put);
+
 
     }
 
@@ -60,6 +66,8 @@ public class HBaseInput {
                 tableDescriptor.addFamily(new HColumnDescriptor(Constant.FAMILY));
                 admin.createTable(tableDescriptor, splits);
                 LOG.info("===== create table completed [{}] =====", tableName.toString());
+            } else {
+                LOG.info("===== table already exists, do nothing! [{}] =====", tableName.toString());
             }
         } catch (IOException e) {
             throw new RuntimeException("get hbase admin error!!!", e);
@@ -73,16 +81,29 @@ public class HBaseInput {
             if (admin.tableExists(tableName)) {
                 admin.disableTable(tableName);
                 admin.deleteTable(tableName);
+                LOG.info("===== delete table completed [{}] =====", tableName.toString());
+            } else {
+                LOG.info("===== table not exists [{}] =====", tableName.toString());
             }
-            LOG.info("===== delete table completed [{}] =====", tableName.toString());
         } catch (IOException e) {
             throw new RuntimeException("get HBase admin error!!!", e);
+        }
+    }
+
+    public void closeResource() {
+        if (connection != null) {
+            try {
+                connection.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
     public static void main(String[] args) {
         HBaseInput baseInput = new HBaseInput();
         byte[][] splits = {"01".getBytes()};
+        baseInput.deleteTable(Constant.NAMESPACE, Constant.TABLE);
         baseInput.createTable(Constant.NAMESPACE, Constant.TABLE, splits);
     }
 }
