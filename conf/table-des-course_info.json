@@ -3,7 +3,7 @@
   "schemaName": "x",
   "partitionInfo": {
     "partitionType": 1,
-    "partitionNum": 1,
+    "partitionNum": 2,
     "rowKeyField": "course"
   },
   "columns": [

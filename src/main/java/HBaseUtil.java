@@ -15,17 +15,21 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author wenci 2020/3/6 19:43
  */
-public class HBaseInput {
-    private static final Logger LOG = LoggerFactory.getLogger(HBaseInput.class);
+public class HBaseUtil {
+    private static final Logger LOG = LoggerFactory.getLogger(HBaseUtil.class);
     public static final String CONF_DIR = "conf";
     public static final String USER_DIR = System.getProperty("user.dir");
     private Connection connection;
 
-    public HBaseInput() {
+    public HBaseUtil() {
         this.connection = createConnection(createHadoopConf());
     }
 
@@ -47,17 +51,48 @@ public class HBaseInput {
         }
     }
 
-    //todo
-    private void input(TableName tableName) throws IOException {
-        Table table = connection.getTable(tableName);
-        String rowKey = "";
-        Put put = new Put(Bytes.toBytes(rowKey));
-        table.put(put);
-
-
+    public void put(String namespace, String tableName, List<String> stringList) throws IOException {
+        Instant start = Instant.now();
+        for (List<Put> putList : genPut(stringList, 1000)) {
+            Table table = connection.getTable(TableName.valueOf(namespace, tableName));
+            table.put(putList);
+        }
+        LOG.info("===== put data succeed! size:{}, cost:{}ms", stringList.size(), (ChronoUnit.MILLIS.between(start, Instant.now())));
     }
 
-    private void createTable(String namespace, String table, byte[][] splits) {
+    public static void main(String[] args) {
+        HBaseUtil hBaseUtil = new HBaseUtil();
+        hBaseUtil.genPut(GenData.genData4CourseInfo(Constant.AMOUNT, 2), 5);
+    }
+
+    private List<List<Put>> genPut(List<String> stringList, int eachSize) {
+        List<List<Put>> puts = new ArrayList<>();
+        List<Put> putList = new ArrayList<>();
+        for (String line : stringList) {
+            String[] n = line.split("\t");
+            String rowKey = n[0];
+            Put put = new Put(Bytes.toBytes(rowKey));
+            for (int i = 0; i < Constant.COLUMNS.length; i++) {
+                put.addColumn(Bytes.toBytes(Constant.FAMILY), Bytes.toBytes(Constant.COLUMNS[i]), Bytes.toBytes(n[i + 1]));
+            }
+            if (putList.size() < eachSize) {
+                putList.add(put);
+            }
+            if (putList.size() >= eachSize) {
+                puts.add(putList);
+                putList.add(put);
+                putList = new ArrayList<>();
+            }
+        }
+        //余数不足eachSize的也要加进去
+        if (!putList.isEmpty()) {
+            puts.add(putList);
+        }
+
+        return puts;
+    }
+
+    public void createTable(String namespace, String table, byte[][] splits) {
         try {
             Admin admin = connection.getAdmin();
             TableName tableName = TableName.valueOf(namespace, table);
@@ -74,7 +109,7 @@ public class HBaseInput {
         }
     }
 
-    private void deleteTable(String namespace, String table) {
+    public void deleteTable(String namespace, String table) {
         try {
             Admin admin = connection.getAdmin();
             TableName tableName = TableName.valueOf(namespace, table);
@@ -98,12 +133,5 @@ public class HBaseInput {
                 e.printStackTrace();
             }
         }
-    }
-
-    public static void main(String[] args) {
-        HBaseInput baseInput = new HBaseInput();
-        byte[][] splits = {"01".getBytes()};
-        baseInput.deleteTable(Constant.NAMESPACE, Constant.TABLE);
-        baseInput.createTable(Constant.NAMESPACE, Constant.TABLE, splits);
     }
 }
