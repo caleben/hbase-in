@@ -9,6 +9,7 @@ import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.io.compress.Compression;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -98,7 +99,7 @@ public class HBaseUtil {
             TableName tableName = TableName.valueOf(namespace, table);
             if (!admin.tableExists(tableName)) {
                 HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
-                tableDescriptor.addFamily(new HColumnDescriptor(Constant.FAMILY));
+                tableDescriptor.addFamily(new HColumnDescriptor(Constant.FAMILY).setCompressionType(Compression.Algorithm.SNAPPY));
                 admin.createTable(tableDescriptor, splits);
                 LOG.info("===== create table completed [{}] =====", tableName.toString());
             } else {
