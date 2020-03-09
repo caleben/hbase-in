@@ -1,4 +1,3 @@
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -28,7 +27,7 @@ public class GenData {
     }
 
     private static String suffix() {
-        long nano = Instant.now().toEpochMilli();
+        long nano = System.nanoTime();
         return String.valueOf(nano) + RAND.nextInt(1000);
     }
 
