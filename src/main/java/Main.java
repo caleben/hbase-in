@@ -8,7 +8,7 @@ public class Main {
     public static void main(String[] args) throws IOException {
         HBaseUtil baseInput = new HBaseUtil();
         byte[][] splits = {"01".getBytes()};
-//        baseInput.deleteTable(Constant.NAMESPACE, Constant.TABLE);
+        baseInput.deleteTable(Constant.NAMESPACE, Constant.TABLE);
         baseInput.createTable(Constant.NAMESPACE, Constant.TABLE, splits);
 
         List<String> stringList = GenData.genData4CourseInfo(Constant.AMOUNT, 2);

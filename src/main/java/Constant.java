@@ -2,7 +2,7 @@
  * @author wenci 2020/3/7 7:19
  */
 public class Constant {
-    public static final Integer AMOUNT = 1_000_000;
+    public static final Integer AMOUNT = 1_0000;
     public static final String NAMESPACE = "x";
     public static final String FAMILY = "f";
     public static final String TABLE = "course_info";

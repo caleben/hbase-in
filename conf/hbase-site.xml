@@ -28,7 +28,7 @@
     </property>
       <property>
       <name>hbase.zookeeper.quorum</name>
-      <value>hdh51,hdh49,hdh50</value>
+      <value>hbpnode003,hbpnode002,hbpnode001</value>
     </property>
       <property>
       <name>hbase.zookeeper.property.clientPort</name>
@@ -36,7 +36,7 @@
     </property>
       <property>
       <name>hbase.rootdir</name>
-      <value>hdfs://SERVICE-HADOOP-admin/hbase</value>
+      <value>hdfs://SERVICE-HADOOP-admin-1/hbase</value>
     </property>
       <property>
       <name>zookeeper.znode.parent</name>
@@ -134,6 +134,33 @@
       <name>hbase.client.scanner.timeout.period</name>
       <value>3600000</value>
     </property>
+      <property>
+      <name>hbase.master.info.port</name>
+      <value>60010</value>
+    </property>
+      <property>
+      <name>hbase.master.info.port.orig</name>
+      <value>60010</value>
+    </property>
+      <property>
+      <name>hbase.regionserver.port</name>
+      <value>60020</value>
+    </property>
+      <property>
+      <name>hbase.regionserver.info.port</name>
+      <value>60030</value>
+    </property>
   
   
-    </configuration>
+    
+    <property>
+        <name>hbase.wal.provider</name>
+        <value>filesystem</value>
+    </property>
+    
+    <property>
+        <name>hbase.wal.provider</name>
+        <value>filesystem</value>
+    </property>
+
+</configuration>

@@ -1,14 +1,16 @@
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.ColumnFamilyDescriptorBuilder;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.client.TableDescriptor;
+import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
 import org.apache.hadoop.hbase.io.compress.Compression;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
@@ -96,10 +98,15 @@ public class HBaseUtil {
     public void createTable(String namespace, String table, byte[][] splits) {
         try {
             Admin admin = connection.getAdmin();
+            admin.createNamespace(NamespaceDescriptor.create(namespace).build());
             TableName tableName = TableName.valueOf(namespace, table);
             if (!admin.tableExists(tableName)) {
-                HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
-                tableDescriptor.addFamily(new HColumnDescriptor(Constant.FAMILY).setCompressionType(Compression.Algorithm.SNAPPY));
+                TableDescriptor tableDescriptor = TableDescriptorBuilder.newBuilder(tableName)
+                        .setColumnFamily(ColumnFamilyDescriptorBuilder.newBuilder(Bytes.toBytes(Constant.FAMILY))
+                                .setMaxVersions(1)
+                                .setCompressionType(Compression.Algorithm.SNAPPY)
+                                .build())
+                        .build();
                 admin.createTable(tableDescriptor, splits);
                 LOG.info("===== create table completed [{}] =====", tableName.toString());
             } else {

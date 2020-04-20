@@ -32,6 +32,9 @@ public class GenData {
     }
 
     public static void main(String[] args) {
-        genData4CourseInfo(100, 2).forEach(System.out::println);
+        List<String> list = genData4CourseInfo(100, 2);
+        list.forEach(System.out::println);
+        System.out.println();
+        Records2File.checkRepeatlive(list);
     }
 }
