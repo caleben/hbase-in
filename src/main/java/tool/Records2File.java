@@ -1,3 +1,5 @@
+package tool;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -5,6 +7,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -75,10 +78,12 @@ public class Records2File {
         }
     }
 
-    public static Map<String, Long> checkRepeatlive(List<String> stringList) {
+    public static Map<String, Long> checkRepeatlive(List<String> stringList) throws IOException {
         Map<String, Long> collect = stringList.stream().collect(Collectors.groupingBy(line -> line.split("\t")[0], Collectors.counting()));
         Map<String, Long> result = collect.entrySet().stream().filter(entry -> entry.getValue() > 1).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        LOG.info("repeat :{}", result);
+        if (result.size() > 0) {
+            throw new IOException("rowKey is redundancy,repeat: " + result);
+        }
         return result;
     }
 }

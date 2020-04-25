@@ -1,3 +1,5 @@
+package tool;
+
 /**
  * @author wenci 2020/3/7 7:19
  */
@@ -10,4 +12,7 @@ public class Constant {
     public static final String[] COURSE = new String[]{"English", "Chinese", "Physical", "Chemistry", "Math", "History", "Political"};
     public static final String[] TEACHER = new String[]{"Tom", "Kong zi", "Einstein", "Harry potter", "Fourier", "Mr SiMa", "Napoleon"};
     public static final String[] COLUMNS = new String[]{"course", "teacher"};
+
+    public static final String ES_HOST = "10.33.57.46";
+    public static final int BULK_ACTIONS = 1_000;
 }

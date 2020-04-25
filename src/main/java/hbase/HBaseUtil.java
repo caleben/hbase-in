@@ -1,3 +1,5 @@
+package hbase;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -15,6 +17,7 @@ import org.apache.hadoop.hbase.io.compress.Compression;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tool.Constant;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,9 +34,20 @@ public class HBaseUtil {
     public static final String CONF_DIR = "conf";
     public static final String USER_DIR = System.getProperty("user.dir");
     private Connection connection;
+    private static HBaseUtil hbaseUtil = new HBaseUtil();
 
     public HBaseUtil() {
         this.connection = createConnection(createHadoopConf());
+    }
+
+    public static void loadData(List<String> stringList) throws IOException {
+        byte[][] splits = {"01".getBytes()};
+
+        hbaseUtil.deleteTableIfExists(Constant.NAMESPACE, Constant.TABLE);
+        hbaseUtil.createTableIfAbsent(Constant.NAMESPACE, Constant.TABLE, splits);
+
+        hbaseUtil.loadData(Constant.NAMESPACE, Constant.TABLE, stringList);
+        hbaseUtil.closeResource();
     }
 
     private Configuration createHadoopConf() {
@@ -54,7 +68,7 @@ public class HBaseUtil {
         }
     }
 
-    public void put(String namespace, String tableName, List<String> stringList) throws IOException {
+    private void loadData(String namespace, String tableName, List<String> stringList) throws IOException {
         Instant start = Instant.now();
         for (List<Put> putList : genPut(stringList, 1000)) {
             Table table = connection.getTable(TableName.valueOf(namespace, tableName));
@@ -82,8 +96,8 @@ public class HBaseUtil {
                 putList.add(put);
             }
             if (putList.size() >= eachSize) {
-                puts.add(putList);
                 putList.add(put);
+                puts.add(putList);
                 putList = new ArrayList<>();
             }
         }
@@ -95,7 +109,7 @@ public class HBaseUtil {
         return puts;
     }
 
-    public void createTable(String namespace, String table, byte[][] splits) {
+    private void createTableIfAbsent(String namespace, String table, byte[][] splits) {
         try {
             Admin admin = connection.getAdmin();
             admin.createNamespace(NamespaceDescriptor.create(namespace).build());
@@ -117,23 +131,23 @@ public class HBaseUtil {
         }
     }
 
-    public void deleteTable(String namespace, String table) {
+    private void deleteTableIfExists(String namespace, String table) {
         try {
             Admin admin = connection.getAdmin();
             TableName tableName = TableName.valueOf(namespace, table);
             if (admin.tableExists(tableName)) {
                 admin.disableTable(tableName);
                 admin.deleteTable(tableName);
-                LOG.info("===== delete table completed [{}] =====", tableName.toString());
+                LOG.info("===== [delete table done] table is [{}] =====", tableName.toString());
             } else {
-                LOG.info("===== table not exists [{}] =====", tableName.toString());
+                LOG.info("===== [delete table false] table not exists [{}] =====", tableName.toString());
             }
         } catch (IOException e) {
             throw new RuntimeException("get HBase admin error!!!", e);
         }
     }
 
-    public void closeResource() {
+    private void closeResource() {
         if (connection != null) {
             try {
                 connection.close();

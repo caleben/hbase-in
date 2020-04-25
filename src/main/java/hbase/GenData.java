@@ -1,3 +1,10 @@
+package hbase;
+
+import tool.Constant;
+import tool.Records2File;
+import tool.String2NumUtil;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -31,7 +38,7 @@ public class GenData {
         return String.valueOf(nano) + RAND.nextInt(1000);
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         List<String> list = genData4CourseInfo(100, 2);
         list.forEach(System.out::println);
         System.out.println();

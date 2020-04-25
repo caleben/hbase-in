@@ -11,12 +11,14 @@
       "name": "course",
       "type": "String",
       "ordinalPosition": 0,
+      "isIndex": true,
       "family": "f"
     },
     {
       "name": "teacher",
       "type": "String",
       "ordinalPosition": 1,
+      "isIndex": false,
       "family": "f"
     }
   ]
