@@ -32,10 +32,10 @@ public class EsQuery {
         BoolQueryBuilder bool = QueryBuilders.boolQuery();
 
         bool.should().add(new MatchQueryBuilder(field, "Chemistry_A"));
-        bool.should().add(new MatchQueryBuilder(field, "Chemistry_b"));
-        bool.should().add(new MatchQueryBuilder(field, "Chemistry_c"));
-        bool.should().add(new MatchQueryBuilder(field, "Chemistry_d"));
-        bool.should().add(new MatchQueryBuilder(field, "Chinese_o"));
+//        bool.should().add(new MatchQueryBuilder(field, "Chemistry_b"));
+//        bool.should().add(new MatchQueryBuilder(field, "Chemistry_c"));
+//        bool.should().add(new MatchQueryBuilder(field, "Chemistry_d"));
+//        bool.should().add(new MatchQueryBuilder(field, "Chinese_o"));
 
         return bool;
     }

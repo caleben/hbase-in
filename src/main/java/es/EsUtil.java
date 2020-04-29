@@ -47,7 +47,7 @@ public class EsUtil {
         );
     }
 
-    public static void loadData(String indexName,String fileName) throws IOException, InterruptedException {
+    public static void loadData(String indexName, String fileName) throws IOException, InterruptedException {
         createTemplateIfAbsent("my-template");
         createIndexIfAbsent(indexName);
         bulkLoad(indexName, FileUtil.readFromFile(fileName));
@@ -89,7 +89,11 @@ public class EsUtil {
                                 "          \"course\": {\n" +
                                 "              \"index\": true,\n" +
                                 "              \"type\": \"keyword\"\n" +
-                                "            }\n" +
+                                "            }\n" + ",\n" +
+                                "      \"track_id\": {\n" +
+                                "        \"type\": \"keyword\",\n" +
+                                "        \"doc_values\": true\n" +
+                                "      }" +
                                 "  }\n" +
                                 "}",
                         XContentType.JSON);
@@ -162,7 +166,7 @@ public class EsUtil {
             String src = n[1];
             bulkProcessor.add(new IndexRequest(indexName)
                     .id(rowKey)
-                    .source(XContentType.JSON, "course", src)
+                    .source(XContentType.JSON, "course", src, "track_id", rowKey)
             );
         }
 
