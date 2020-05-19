@@ -41,6 +41,6 @@ public class Main {
 //        loadData4HBase(stringList);
 
         //load ES
-        loadData4Es("course_es", dataFile);
+        loadData4Es("x.course_info", dataFile);
     }
 }

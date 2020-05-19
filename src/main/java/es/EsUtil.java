@@ -77,7 +77,7 @@ public class EsUtil {
             return;
         }
         PutIndexTemplateRequest request = new PutIndexTemplateRequest(name)
-                .patterns(Collections.singletonList("course_*"))
+                .patterns(Collections.singletonList("x.course_info"))
                 .order(0)
                 .settings(Settings.builder()
                         .put("index.number_of_shards", 3)
