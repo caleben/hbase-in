@@ -19,6 +19,8 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.ByteSizeUnit;
 import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 
 import static tool.Constant.BULK_ACTIONS;
 import static tool.Constant.ES_HOST;
+import static tool.Constant.ES_PORT;
 
 /**
  * @author wenci 2020/4/22
@@ -42,7 +45,7 @@ public class EsUtil {
     private static RestHighLevelClient getHighLevelClient() {
         return new RestHighLevelClient(
                 RestClient.builder(
-                        new HttpHost(ES_HOST, 9200, "http")
+                        new HttpHost(ES_HOST, ES_PORT, "http")
                 )
         );
     }
@@ -83,20 +86,30 @@ public class EsUtil {
                         .put("index.number_of_shards", 3)
                         .put("index.number_of_replicas", 1)
                         .put("index.refresh_interval", "20s"))
-                .mapping(
-                        "{\n" +
-                                "\"properties\": {\n" +
-                                "          \"course\": {\n" +
-                                "              \"index\": true,\n" +
-                                "              \"type\": \"keyword\"\n" +
-                                "            }\n" + ",\n" +
-                                "      \"track_id\": {\n" +
-                                "        \"type\": \"keyword\",\n" +
-                                "        \"doc_values\": true\n" +
-                                "      }" +
-                                "  }\n" +
-                                "}",
-                        XContentType.JSON);
+                .mapping(XContentFactory.jsonBuilder().startObject()
+                .startObject("properties")
+                        .startObject("course")
+                          .field("index",true)
+                          .field("type","keyword")
+                        .endObject()
+                        .startObject("track_id")
+                          .field("type","keyword")
+                        .endObject()
+                .endObject().endObject());
+//                .mapping(
+//                        "{\n" +
+//                                "\"properties\": {\n" +
+//                                "          \"course\": {\n" +
+//                                "              \"index\": true,\n" +
+//                                "              \"type\": \"keyword\"\n" +
+//                                "            }\n" + ",\n" +
+//                                "      \"track_id\": {\n" +
+//                                "        \"type\": \"keyword\",\n" +
+//                                "        \"doc_values\": true\n" +
+//                                "      }" +
+//                                "  }\n" +
+//                                "}",
+//                        XContentType.JSON);
 
         request.create(false);
         AcknowledgedResponse re = client.indices().putTemplate(request, RequestOptions.DEFAULT);

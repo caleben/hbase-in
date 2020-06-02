@@ -14,7 +14,9 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
 import org.apache.hadoop.hbase.io.compress.Compression;
+import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tool.Constant;
@@ -52,17 +54,21 @@ public class HBaseUtil {
 
     private Configuration createHadoopConf() {
         String path = USER_DIR + File.separator + CONF_DIR;
-        LOG.info("path: " + path);
+        LOG.info("user dir path: " + path);
         Configuration conf;
         conf = HBaseConfiguration.create();
-        conf.addResource(new Path(path, "hbase-site.xml"));
+        // zookeeper地址
+//        conf.set("hbase.zookeeper.quorum", "10.33.57.49");
+//        conf.set("hbase.zookeeper.property.clientPort","2181");
         conf.set("hbase.client.scanner.timeout.period", "90000");
+        conf.addResource(new Path(path, "hbase-site.xml"));
         return conf;
     }
 
     private Connection createConnection(Configuration configuration) {
         try {
-            return ConnectionFactory.createConnection(configuration);
+            User user = User.create(UserGroupInformation.createRemoteUser("root"));
+            return ConnectionFactory.createConnection(configuration,user);
         } catch (IOException e) {
             throw new RuntimeException("get HBase connection error!!!", e);
         }

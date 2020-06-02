@@ -4,6 +4,7 @@ import hbase.HBaseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tool.Constant;
+import tool.FileUtil;
 import tool.Records2File;
 
 import java.io.IOException;
@@ -38,9 +39,9 @@ public class Main {
 //        List<String> stringList = genData(dataFile);
 
         //load HBase data
-//        loadData4HBase(stringList);
+        loadData4HBase(FileUtil.readFromFile(dataFile));
 
         //load ES
-        loadData4Es("x.course_info", dataFile);
+//        loadData4Es("x.course_info", dataFile);
     }
 }

@@ -13,6 +13,7 @@ public class Constant {
     public static final String[] TEACHER = new String[]{"Tom", "Kong zi", "Einstein", "Harry potter", "Fourier", "Mr SiMa", "Napoleon"};
     public static final String[] COLUMNS = new String[]{"course", "teacher"};
 
-    public static final String ES_HOST = "10.33.57.53";
+    public static final String ES_HOST = "10.33.57.49";
+    public static final int ES_PORT = 31467;
     public static final int BULK_ACTIONS = 1_000;
 }

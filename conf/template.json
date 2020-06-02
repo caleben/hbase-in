@@ -9,39 +9,37 @@
     "number_of_replicas": 1
   },
   "mappings": {
-    "doc": {
-      "_source": {
-        "enabled": true
-      },
-      "dynamic_templates": [
-        {
-          "string_as": {
-            "match_mapping_type": "string",
-            "mapping": {
-              "index": true,
-              "type": "keyword"
-            }
-          }
-        },
-        {
-          "long_as": {
-            "match_mapping_type": "long",
-            "mapping": {
-              "index": true,
-              "type": "integer"
-            }
-          }
-        },
-        {
-          "double_as": {
-            "match_mapping_type": "double",
-            "mapping": {
-              "index": true,
-              "type": "float"
-            }
+    "_source": {
+      "enabled": true
+    },
+    "dynamic_templates": [
+      {
+        "string_as": {
+          "match_mapping_type": "string",
+          "mapping": {
+            "index": true,
+            "type": "keyword"
           }
         }
-      ]
-    }
+      },
+      {
+        "long_as": {
+          "match_mapping_type": "long",
+          "mapping": {
+            "index": true,
+            "type": "integer"
+          }
+        }
+      },
+      {
+        "double_as": {
+          "match_mapping_type": "double",
+          "mapping": {
+            "index": true,
+            "type": "float"
+          }
+        }
+      }
+    ]
   }
 }
