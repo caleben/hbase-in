@@ -1,7 +1,6 @@
 package hbase;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.TableName;
@@ -43,7 +42,7 @@ public class HBaseUtil {
     }
 
     public static void loadData(List<String> stringList) throws IOException {
-        byte[][] splits = {"01".getBytes()};
+        byte[][] splits = {"01".getBytes(),"02".getBytes()};
 
         hbaseUtil.deleteTableIfExists(Constant.NAMESPACE, Constant.TABLE);
         hbaseUtil.createTableIfAbsent(Constant.NAMESPACE, Constant.TABLE, splits);
@@ -57,18 +56,22 @@ public class HBaseUtil {
         LOG.info("user dir path: " + path);
         Configuration conf;
         conf = HBaseConfiguration.create();
-        // zookeeper地址
-//        conf.set("hbase.zookeeper.quorum", "10.33.57.49");
-//        conf.set("hbase.zookeeper.property.clientPort","2181");
+//         zookeeper地址
+        conf.set("hbase.zookeeper.quorum", "10.33.57.49");
+        conf.set("hbase.zookeeper.property.clientPort", "30448");
+        conf.set("zookeeper.znode.parent", "/hbp_root/hik/hbase");
         conf.set("hbase.client.scanner.timeout.period", "90000");
-        conf.addResource(new Path(path, "hbase-site.xml"));
+        conf.set("hbase.master.info.port", "31109");
+        conf.set("hbase.table.sanity.checks","false");
+//        conf.set("hbase.regionserver.port", "");
+//        conf.addResource(new Path(path, "hbase-site.xml"));
         return conf;
     }
 
     private Connection createConnection(Configuration configuration) {
         try {
             User user = User.create(UserGroupInformation.createRemoteUser("root"));
-            return ConnectionFactory.createConnection(configuration,user);
+            return ConnectionFactory.createConnection(configuration, user);
         } catch (IOException e) {
             throw new RuntimeException("get HBase connection error!!!", e);
         }
@@ -118,12 +121,19 @@ public class HBaseUtil {
     private void createTableIfAbsent(String namespace, String table, byte[][] splits) {
         try {
             Admin admin = connection.getAdmin();
-            admin.createNamespace(NamespaceDescriptor.create(namespace).build());
+            try {
+                admin.createNamespace(NamespaceDescriptor.create(namespace).build());
+            } catch (Exception e) {
+                LOG.info("create namespace failed!",e.getMessage());
+            }
             TableName tableName = TableName.valueOf(namespace, table);
             if (!admin.tableExists(tableName)) {
                 TableDescriptor tableDescriptor = TableDescriptorBuilder.newBuilder(tableName)
                         .setColumnFamily(ColumnFamilyDescriptorBuilder.newBuilder(Bytes.toBytes(Constant.FAMILY))
                                 .setMaxVersions(1)
+                                //snappy压缩报错 Compression algorithm 'snappy' previously failed test
+                                //原因是snappy库so库要加入  Linux-amd64-64文件夹下包含libsnappy.so等文件，这个文件夹放在HBase
+                                //安装目录lib下效果相当于设置环境变量：export HBASE_LIBRARY_PATH=/path/to/Linux-amd64-64
                                 .setCompressionType(Compression.Algorithm.SNAPPY)
                                 .build())
                         .build();

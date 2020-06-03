@@ -17,7 +17,7 @@ public class Main {
     private static final Logger LOG = LoggerFactory.getLogger(Main.class);
 
     public static List<String> genData(String dataFile) throws IOException {
-        List<String> stringList = GenData.genData4CourseInfo(Constant.AMOUNT, 2);
+        List<String> stringList = GenData.genData4CourseInfo(Constant.AMOUNT, 3);
         Records2File.checkRepeatlive(stringList);
         Records2File.asynchronousWrite(dataFile, stringList);
         return stringList;
