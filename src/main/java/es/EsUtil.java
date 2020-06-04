@@ -24,7 +24,9 @@ import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tool.Constant;
 import tool.FileUtil;
+import tool.Tool;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -32,7 +34,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static tool.Constant.BULK_ACTIONS;
-import static tool.Constant.ES_HOST;
+import static tool.Constant.ES_HBASE_HOST;
 import static tool.Constant.ES_PORT;
 
 /**
@@ -45,13 +47,13 @@ public class EsUtil {
     private static RestHighLevelClient getHighLevelClient() {
         return new RestHighLevelClient(
                 RestClient.builder(
-                        new HttpHost(ES_HOST, ES_PORT, "http")
+                        new HttpHost(ES_HBASE_HOST, ES_PORT, "http")
                 )
         );
     }
 
     public static void loadData(String indexName, String fileName) throws IOException, InterruptedException {
-        createTemplateIfAbsent("my-template");
+        createTemplateIfAbsent("my-template", indexName.substring(0, indexName.indexOf(Tool.LINE)) + "*");
         createIndexIfAbsent(indexName);
         bulkLoad(indexName, FileUtil.readFromFile(fileName));
         closeResource();
@@ -74,46 +76,39 @@ public class EsUtil {
         return client.indices().existsTemplate(request, RequestOptions.DEFAULT);
     }
 
-    private static void createTemplateIfAbsent(String name) throws IOException {
+    private static void createTemplateIfAbsent(String name, String patterns) throws IOException {
         if (isTemplateExist(name)) {
             LOG.info(">>> template [{}] exists,do nothing", name);
             return;
         }
         PutIndexTemplateRequest request = new PutIndexTemplateRequest(name)
-                .patterns(Collections.singletonList("x.course_info"))
+                .patterns(Collections.singletonList(patterns))
                 .order(0)
-                .settings(Settings.builder()
-                        .put("index.number_of_shards", 3)
-                        .put("index.number_of_replicas", 1)
-                        .put("index.refresh_interval", "20s"))
-                .mapping(XContentFactory.jsonBuilder().startObject()
-                .startObject("properties")
-                        .startObject("course")
-                          .field("index",true)
-                          .field("type","keyword")
-                        .endObject()
-                        .startObject("track_id")
-                          .field("type","keyword")
-                        .endObject()
-                .endObject().endObject());
-//                .mapping(
-//                        "{\n" +
-//                                "\"properties\": {\n" +
-//                                "          \"course\": {\n" +
-//                                "              \"index\": true,\n" +
-//                                "              \"type\": \"keyword\"\n" +
-//                                "            }\n" + ",\n" +
-//                                "      \"track_id\": {\n" +
-//                                "        \"type\": \"keyword\",\n" +
-//                                "        \"doc_values\": true\n" +
-//                                "      }" +
-//                                "  }\n" +
-//                                "}",
-//                        XContentType.JSON);
+                .settings(genSettings())
+                .mapping(genFieldMapping(Constant.COLUMNS));
 
+        // false 表示如果存在则update; true 表示只能create，如果存在则报错
         request.create(false);
         AcknowledgedResponse re = client.indices().putTemplate(request, RequestOptions.DEFAULT);
         LOG.info(">>> create template {} {}", name, re.isAcknowledged());
+    }
+
+    private static Settings.Builder genSettings() {
+        return Settings.builder()
+                .put("index.number_of_shards", 3)
+                .put("index.number_of_replicas", 1)
+                .put("index.refresh_interval", "20s");
+    }
+
+    private static XContentBuilder genFieldMapping(String[] columns) throws IOException {
+        XContentBuilder builder = XContentFactory.jsonBuilder()
+                .startObject().startObject("properties");
+        for (String column : columns) {
+            builder.startObject(column)
+                    .field("type", "keyword")
+                    .endObject();
+        }
+        return builder.endObject().endObject();
     }
 
     private static boolean isIndexExist(String name) throws IOException {
@@ -175,11 +170,16 @@ public class EsUtil {
 
         for (String line : stringList) {
             String[] n = line.split("\t");
-            String rowKey = n[0];
-            String src = n[1];
+
+            Object[] objects = new Object[2 * Constant.COLUMNS.length];
+
+            for (int i = 0; i < Constant.COLUMNS.length; i++) {
+                objects[2 * i] = Constant.COLUMNS[i];
+                objects[2 * i + 1] = n[i + 1];
+            }
             bulkProcessor.add(new IndexRequest(indexName)
-                    .id(rowKey)
-                    .source(XContentType.JSON, "course", src, "track_id", rowKey)
+                    .id(n[0])
+                    .source(XContentType.JSON, objects)
             );
         }
 
@@ -191,12 +191,4 @@ public class EsUtil {
         return client;
     }
 
-    public static void main(String[] args) throws IOException, InterruptedException {
-        LOG.info(">>>>>>>> start >>>>>>>");
-        String indexName = "course_es";
-        createTemplateIfAbsent("my-template");
-        createIndexIfAbsent(indexName);
-        bulkLoad(indexName, FileUtil.readFromFile("course_info.txt"));
-        closeResource();
-    }
 }

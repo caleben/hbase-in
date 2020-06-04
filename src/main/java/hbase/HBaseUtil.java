@@ -19,6 +19,7 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tool.Constant;
+import tool.Tool;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,6 +27,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author wenci 2020/3/6 19:43
@@ -38,11 +40,13 @@ public class HBaseUtil {
     private static HBaseUtil hbaseUtil = new HBaseUtil();
 
     public HBaseUtil() {
-        this.connection = createConnection(createHadoopConf());
+        this.connection = loginWithUser(createHadoopConf(), "root");
     }
 
-    public static void loadData(List<String> stringList) throws IOException {
-        byte[][] splits = {"01".getBytes(),"02".getBytes()};
+    public static void loadData(List<String> stringList, String yyyyMM) throws IOException {
+        List<byte[]> list = Tool.produceSplits(yyyyMM, Constant.SEGMENT, Constant.HASH_NUM).stream()
+                .map(String::getBytes).collect(Collectors.toList());
+        byte[][] splits = list.toArray(new byte[0][]);
 
         hbaseUtil.deleteTableIfExists(Constant.NAMESPACE, Constant.TABLE);
         hbaseUtil.createTableIfAbsent(Constant.NAMESPACE, Constant.TABLE, splits);
@@ -56,21 +60,26 @@ public class HBaseUtil {
         LOG.info("user dir path: " + path);
         Configuration conf;
         conf = HBaseConfiguration.create();
-//         zookeeper地址
-        conf.set("hbase.zookeeper.quorum", "10.33.57.49");
-        conf.set("hbase.zookeeper.property.clientPort", "30448");
-        conf.set("zookeeper.znode.parent", "/hbp_root/hik/hbase");
+        if (Constant.K8S) {
+            conf.set("hbase.zookeeper.quorum", Constant.ES_HBASE_HOST);
+            conf.set("hbase.zookeeper.property.clientPort", String.valueOf(Constant.HBASE_ZK_CLIENT_PORT));
+            conf.set("zookeeper.znode.parent", "/hbp_root/hik/hbase");
+            conf.set("hbase.master.info.port", "31109");
+        } else {
+            //         zookeeper地址 端口
+            conf.set("hbase.zookeeper.quorum", Constant.ES_HBASE_HOST);
+            conf.set("hbase.zookeeper.property.clientPort", String.valueOf(Constant.HBASE_ZK_CLIENT_PORT));
+        }
+
         conf.set("hbase.client.scanner.timeout.period", "90000");
-        conf.set("hbase.master.info.port", "31109");
-        conf.set("hbase.table.sanity.checks","false");
-//        conf.set("hbase.regionserver.port", "");
+
 //        conf.addResource(new Path(path, "hbase-site.xml"));
         return conf;
     }
 
-    private Connection createConnection(Configuration configuration) {
+    private Connection loginWithUser(Configuration configuration, String userName) {
         try {
-            User user = User.create(UserGroupInformation.createRemoteUser("root"));
+            User user = User.create(UserGroupInformation.createRemoteUser(userName));
             return ConnectionFactory.createConnection(configuration, user);
         } catch (IOException e) {
             throw new RuntimeException("get HBase connection error!!!", e);
@@ -82,13 +91,9 @@ public class HBaseUtil {
         for (List<Put> putList : genPut(stringList, 1000)) {
             Table table = connection.getTable(TableName.valueOf(namespace, tableName));
             table.put(putList);
+            table.close();
         }
         LOG.info("===== put data succeed! size:{}, cost:{}ms", stringList.size(), (ChronoUnit.MILLIS.between(start, Instant.now())));
-    }
-
-    public static void main(String[] args) {
-        HBaseUtil hBaseUtil = new HBaseUtil();
-        hBaseUtil.genPut(GenData.genData4CourseInfo(Constant.AMOUNT, 2), 5);
     }
 
     private List<List<Put>> genPut(List<String> stringList, int eachSize) {
@@ -124,7 +129,7 @@ public class HBaseUtil {
             try {
                 admin.createNamespace(NamespaceDescriptor.create(namespace).build());
             } catch (Exception e) {
-                LOG.info("create namespace failed!",e.getMessage());
+                LOG.info("create namespace failed!", e.getMessage());
             }
             TableName tableName = TableName.valueOf(namespace, table);
             if (!admin.tableExists(tableName)) {

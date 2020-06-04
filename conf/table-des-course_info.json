@@ -1,24 +1,40 @@
 {
   "tableName": "course_info",
   "schemaName": "x",
-  "partitionInfo": {
-    "partitionType": 1,
-    "partitionNum": 2,
-    "rowKeyField": "course"
+  "tableProperties": {
+    "partitionType": 2,
+    "segmentNum": 2,
+    "hashNum": 2,
+    "shardNum": 1,
+    "regionEndingNum": 0,
+    "regionStepNum": 0,
+    "rowKeyField": [
+      "course"
+    ],
+    "timeField": "time",
+    "columnPak": false,
+    "columnPakFQ": ""
   },
   "columns": [
     {
       "name": "course",
       "type": "String",
       "ordinalPosition": 0,
-      "isIndex": true,
+      "index": true,
       "family": "f"
     },
     {
       "name": "teacher",
       "type": "String",
       "ordinalPosition": 1,
-      "isIndex": false,
+      "index": false,
+      "family": "f"
+    },
+    {
+      "name": "time",
+      "type": "long",
+      "ordinalPosition": 2,
+      "index": false,
       "family": "f"
     }
   ]
