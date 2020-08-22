@@ -103,9 +103,10 @@ public class HBaseUtil {
             String[] n = line.split("\t");
             String rowKey = n[0];
             Put put = new Put(Bytes.toBytes(rowKey));
-            for (int i = 0; i < Constant.COLUMNS.length; i++) {
+            for (int i = 0; i < Constant.COLUMNS.length-1; i++) {
                 put.addColumn(Bytes.toBytes(Constant.FAMILY), Bytes.toBytes(Constant.COLUMNS[i]), Bytes.toBytes(n[i + 1]));
             }
+            put.addColumn(Bytes.toBytes(Constant.FAMILY), Bytes.toBytes("time"), Bytes.toBytes(Long.parseLong(n[n.length-1])));
             if (putList.size() < eachSize) {
                 putList.add(put);
             }

@@ -104,12 +104,12 @@ public class EsQuery {
     }
 
     public static void main(String[] args) throws IOException {
-        String indexName = "course_es";
+        String indexName = "x.course_info*";
         String field = "course";
         String value = "Chinese_o";
         EsQuery esQuery = new EsQuery();
 //        esQuery.getResult(indexName, field, value);
-        esQuery.getResultBySearchAfter(indexName, field, value, 10);
+        esQuery.getResultBySearchAfter(indexName, field, value, 7);
         EsUtil.closeResource();
 
     }

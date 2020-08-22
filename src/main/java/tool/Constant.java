@@ -16,9 +16,9 @@ public class Constant {
     public static final String[] TEACHER = new String[]{"Tom", "Kong zi", "Einstein", "Harry potter", "Fourier", "Mr SiMa", "Napoleon"};
     public static final String[] COLUMNS = new String[]{"course", "teacher", "time"};
 
-    public static final boolean K8S = false;
-    public static final String ES_HBASE_HOST = "10.33.57.47";
-    public static final int ES_PORT = 9200;
-    public static final int HBASE_ZK_CLIENT_PORT = 2181;
-    public static final int BULK_ACTIONS = 1_000;
+    public static boolean K8S = false;
+    public static String ES_HBASE_HOST = "10.33.57.50";
+    public static int ES_PORT = 9200;
+    public static int HBASE_ZK_CLIENT_PORT = 2181;
+    public static int BULK_ACTIONS = 1_000;
 }

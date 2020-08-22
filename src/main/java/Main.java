@@ -4,7 +4,6 @@ import hbase.HBaseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tool.Constant;
-import tool.FileUtil;
 import tool.Records2File;
 import tool.Tool;
 
@@ -36,14 +35,14 @@ public class Main {
     }
 
     public static void main(String[] args) throws IOException, InterruptedException {
-        String yearMonth = "202005";
+        String yearMonth = "202007";
         String name = "x.course_info";
         String dataFile = "course_info.txt";
         //generate data
 //        List<String> stringList = genData(dataFile);
 
         //load HBase data
-        loadData4HBase(FileUtil.readFromFile(dataFile),yearMonth);
+//        loadData4HBase(FileUtil.readFromFile(dataFile),yearMonth);
 
         //load ES
         String indexName = Tool.monthIndicesWithTable(yearMonth, Constant.SHARD_NUM, name).get(0);

@@ -1,6 +1,9 @@
 package es;
 
 import org.apache.http.HttpHost;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.elasticsearch.action.bulk.BackoffPolicy;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.bulk.BulkRequest;
@@ -9,6 +12,7 @@ import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
+import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.indices.CreateIndexRequest;
 import org.elasticsearch.client.indices.CreateIndexResponse;
@@ -29,6 +33,7 @@ import tool.FileUtil;
 import tool.Tool;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -42,18 +47,31 @@ import static tool.Constant.ES_PORT;
  */
 public class EsUtil {
     private static final Logger LOG = LoggerFactory.getLogger(EsUtil.class);
-    private static RestHighLevelClient client = getHighLevelClient();
+    private static RestHighLevelClient client = getHighLevelClient(ES_HBASE_HOST, ES_PORT);
 
-    private static RestHighLevelClient getHighLevelClient() {
-        return new RestHighLevelClient(
-                RestClient.builder(
-                        new HttpHost(ES_HBASE_HOST, ES_PORT, "http")
-                )
-        );
+    private static RestHighLevelClient getHighLevelClient(String ip, int port) {
+        RestClientBuilder builder;
+        List<HttpHost> httpHosts = new ArrayList<>();
+
+        for (String s : ip.split(",")) {
+            httpHosts.add(new HttpHost(s.trim(), port));
+        }
+
+        builder = RestClient.builder(httpHosts.toArray(new HttpHost[0]));
+
+        RestHighLevelClient client = new RestHighLevelClient(builder);
+        //ES认证默认关闭
+        if (false) {
+            BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+            credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials("elasticsearch", "xxx"));
+            builder.setHttpClientConfigCallback(httpClientBuilder -> httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider));
+        }
+        return client;
     }
 
     public static void loadData(String indexName, String fileName) throws IOException, InterruptedException {
-        createTemplateIfAbsent("my-template", indexName.substring(0, indexName.indexOf(Tool.LINE)) + "*");
+        createTemplateIfAbsent("my-template", true, true,
+                indexName.substring(0, indexName.indexOf(Tool.LINE)) + "*");
         createIndexIfAbsent(indexName);
         bulkLoad(indexName, FileUtil.readFromFile(fileName));
         closeResource();
@@ -76,7 +94,7 @@ public class EsUtil {
         return client.indices().existsTemplate(request, RequestOptions.DEFAULT);
     }
 
-    private static void createTemplateIfAbsent(String name, String patterns) throws IOException {
+    private static void createTemplateIfAbsent(String name, boolean hot, boolean switchOn, String patterns) throws IOException {
         if (isTemplateExist(name)) {
             LOG.info(">>> template [{}] exists,do nothing", name);
             return;
@@ -84,7 +102,7 @@ public class EsUtil {
         PutIndexTemplateRequest request = new PutIndexTemplateRequest(name)
                 .patterns(Collections.singletonList(patterns))
                 .order(0)
-                .settings(genSettings())
+                .settings(genSettings(hot, switchOn))
                 .mapping(genFieldMapping(Constant.COLUMNS));
 
         // false 表示如果存在则update; true 表示只能create，如果存在则报错
@@ -93,11 +111,15 @@ public class EsUtil {
         LOG.info(">>> create template {} {}", name, re.isAcknowledged());
     }
 
-    private static Settings.Builder genSettings() {
-        return Settings.builder()
-                .put("index.number_of_shards", 3)
-                .put("index.number_of_replicas", 1)
+    private static Settings.Builder genSettings(boolean hot, boolean switchHotWarm) {
+        Settings.Builder settings = Settings.builder()
+                .put("index.number_of_shards", 2)
+                .put("index.number_of_replicas", 0)
                 .put("index.refresh_interval", "20s");
+        return switchHotWarm ?
+                hot ? settings.put("index.routing.allocation.require.temperature", "hot") :
+                        settings.put("index.routing.allocation.require.temperature", "warm")
+                : settings;
     }
 
     private static XContentBuilder genFieldMapping(String[] columns) throws IOException {
